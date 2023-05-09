@@ -1,90 +1,59 @@
 import React, { useEffect, useState } from "react";
-import Card from "./Componentes/card.jsx";
 import "./App.css";
-import Mycontexto from "./contexto.js";
+import "./Responsive.css";
+
+import Mycontext from "./contexto";
+import axios from "axios";
+import CardUser from "./Componentes/cardUser";
+import SearchBar from "./Componentes/searchBar";
+import Footer from "./Componentes/footer";
+import Panel from "./Componentes/panel";
 function App() {
-  const [data, setData] = useState([]);
-  const [cardVisible, setCardVisible] = useState(false);
-  const [indice, setIndice] = useState(0);
-  const [gender, setGender] = useState("");
+  const [fetchApi, setFetchApi] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [idxUser, setIdxUser] = useState("");
+
+  async function getUser() {
+    const callApi = await axios.get(
+      `https://randomuser.me/api/?results=10&page=${currentPage}`
+    );
+    const responseApi = await callApi.data.results;
+    setFetchApi(responseApi);
+    console.log(fetchApi);
+  }
 
   useEffect(() => {
-    fetchData();
-  }, [gender]);
-
-  async function fetchData() {
-    const search = await fetch(`https://randomuser.me/api/?results=10&gender=${gender}`);
-    const response = await search.json();
-    setData(response.results);
-  }
-  console.log(data);
-  function handleCard() {
-    if (cardVisible) {
-      return <div>{<Card info={data[indice]} />}</div>;
-    } else {
-      return null;
-    }
-  }
+    getUser();
+  }, [currentPage]);
 
   return (
-    <Mycontexto.Provider value={{ cardVisible, setCardVisible }}>
-      <header></header>
-      <div className="App">
-        <div className="btns-gender">
-          <button onClick={()=>{
-            setGender('male')
-          }} id="btn-male">Male</button>
-          <button onClick={()=>{
-            setGender('female')
-          }} id="btn-female">Female</button>
-          <button onClick={()=>{
-            setGender('')
-          }} id="btn-ambos">Ambos</button>
+    <Mycontext.Provider
+      value={{
+        currentPage,
+        setCurrentPage,
+        showModal,
+        setShowModal,
+        setIdxUser,
+        fetchApi,
+        setFetchApi,
+      }}
+    >
+      <main>
+        <header>
+          <div className="container-header">
+            <h1>User List</h1>
+          </div>
+        </header>
+        <Panel />
+        <div>
+          {showModal ? (
+            <CardUser infoUser={fetchApi} indexUser={idxUser} />
+          ) : null}
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Genêro</th>
-              <th>Nascimento</th>
-              <th>Mais...</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((item, index) => {
-              return (
-                <tr key={index}>
-                  <td>
-                    {item.name.title + " " + item.name.first + " " + item.name.last}
-                  </td>
-                  <td>{item.gender}</td>
-                  <td>
-                    {item.dob.date.slice(8, 10) +
-                      "/" +
-                      item.dob.date.slice(5, 7) +
-                      "/" +
-                      item.dob.date.slice(0, 4)}
-                  </td>
-                  <td>
-                    <button
-                      className="btn-view"
-                      onClick={() => {
-                        setCardVisible(!cardVisible);
-                        setIndice(index);
-                        handleCard();
-                      }}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {handleCard()}
-      </div>
-    </Mycontexto.Provider>
+        <Footer />
+      </main>
+    </Mycontext.Provider>
   );
 }
 export default App;
